@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do Web App</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="loginPage" class="login-page">
+        <div class="login-container">
+            <div class="login-header">
+                <h1><i class="fas fa-tasks"></i> ToDoMaster</h1>
+                <p>Your smart task management companion</p>
+            </div>
+
+            <div class="auth-tabs">
+                <button class="tab-btn active" onclick="switchTab('login')">Login</button>
+                <button class="tab-btn" onclick="switchTab('register')">Register</button>
+                <button class="tab-btn" onclick="switchTab('guest')">Guest Mode</button>
+            </div>
+
+            <!-- Login Form -->
+            <div id="loginForm" class="auth-form active">
+                <h2>Welcome Back!</h2>
+                <form id="authLoginForm">
+                    <div class="form-group">
+                        <label for="loginEmail">Email</label>
+                        <input type="email" id="loginEmail" placeholder="Enter your email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Password</label>
+                        <input type="password" id="loginPassword" placeholder="Enter your password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </button>
+                </form>
+                
+                <div class="demo-credentials">
+                    <p><strong>Demo Account:</strong></p>
+                    <p>📧 Email: demo@example.com</p>
+                    <p>🔑 Password: password123</p>
+                    <button type="button" class="btn btn-outline" onclick="fillDemoCredentials()">
+                        <i class="fas fa-user"></i> Use Demo Account
+                    </button>
+                </div>
+            </div>
+
+            <!-- Register Form -->
+            <div id="registerForm" class="auth-form">
+                <h2>Create Account</h2>
+                <form id="authRegisterForm">
+                    <div class="form-group">
+                        <label for="registerName">Full Name</label>
+                        <input type="text" id="registerName" placeholder="Enter your full name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerEmail">Email</label>
+                        <input type="email" id="registerEmail" placeholder="Enter your email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">Password</label>
+                        <input type="password" id="registerPassword" placeholder="Create a password (min 6 characters)" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password</label>
+                        <input type="password" id="confirmPassword" placeholder="Confirm your password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        <i class="fas fa-user-plus"></i> Create Account
+                    </button>
+                </form>
+            </div>
+
+            <!-- Guest Mode -->
+            <div id="guestForm" class="auth-form">
+                <div class="guest-info">
+                    <h2>Try as Guest</h2>
+                    <div class="guest-features">
+                        <h3>Guest Mode Features:</h3>
+                        <ul>
+                            <li><i class="fas fa-check"></i> Create and manage tasks</li>
+                            <li><i class="fas fa-check"></i> Use all app features</li>
+                            <li><i class="fas fa-check"></i> Local data storage</li>
+                            <li><i class="fas fa-exclamation-triangle"></i> Data will be lost when browser is cleared</li>
+                        </ul>
+                    </div>
+                    <button type="button" class="btn btn-info" style="width: 100%;" onclick="todoApp.loginAsGuest()">
+                        <i class="fas fa-user-secret"></i> Continue as Guest
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Chatbot -->
+        <div id="aiChatbot" class="chatbot-container">
+            <div class="chatbot-header" onclick="toggleChatbot()">
+                <i class="fas fa-robot"></i>
+                <span>AI Assistant</span>
+                <i class="fas fa-chevron-up" id="chatbotToggle"></i>
+            </div>
+            <div class="chatbot-body" id="chatbotBody">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="chat-message bot-message">
+                        <div class="message-avatar">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="message-content">
+                            <p>Hi! I'm your AI assistant. I can help you with:</p>
+                            <ul>
+                                <li>🔐 Login and registration questions</li>
+                                <li>📝 How to use the todo app</li>
+                                <li>💡 Productivity tips</li>
+                                <li>⚙️ App features and functionality</li>
+                            </ul>
+                            <p>What can I help you with today?</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-input-container">
+                    <input type="text" id="chatInput" placeholder="Ask me anything..." onkeypress="handleChatInput(event)">
+                    <button onclick="sendChatMessage()" class="chat-send-btn">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="mainApp" class="container" style="display: none;">
+        <header>
+            <div class="header-content">
+                <div class="header-left">
+                    <h1><i class="fas fa-tasks"></i> ToDoMaster</h1>
+                    <p>Organize your tasks efficiently</p>
+                </div>
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <span class="username" id="userName">User</span>
+                    <div class="user-menu">
+                        <button class="btn-icon btn-secondary" onclick="toggleDarkMode()" title="Toggle Dark Mode">
+                            <i class="fas fa-moon" id="darkModeIcon"></i>
+                        </button>
+                        <button class="btn-icon btn-danger" onclick="todoApp.logout()" title="Logout">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="app-content">
+            <!-- Add New Task Section -->
+            <div class="add-task-section glass-card">
+                <h2>✨ Add New Task</h2>
+                <form id="taskForm">
+                    <div class="form-group">
+                        <label for="taskTitle">Task Title *</label>
+                        <input type="text" id="taskTitle" placeholder="Enter your awesome task..." required>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskDescription">Description</label>
+                        <textarea id="taskDescription" placeholder="Add more details about your task (optional)"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="taskDate">📅 Due Date</label>
+                            <input type="date" id="taskDate">
+                        </div>
+                        <div class="form-group">
+                            <label for="taskTime">⏰ Due Time</label>
+                            <input type="time" id="taskTime">
+                        </div>
+                        <div class="form-group">
+                            <label for="taskPriority">🎯 Priority Level</label>
+                            <select id="taskPriority">
+                                <option value="low">🟢 Low Priority</option>
+                                <option value="medium" selected>🟡 Medium Priority</option>
+                                <option value="high">🔴 High Priority</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="taskCategory">📂 Category</label>
+                            <select id="taskCategory">
+                                <option value="personal">👤 Personal</option>
+                                <option value="work">💼 Work</option>
+                                <option value="shopping">🛒 Shopping</option>
+                                <option value="health">🏥 Health</option>
+                                <option value="education">📚 Education</option>
+                                <option value="other">📋 Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add Task
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('taskForm').reset()">
+                            <i class="fas fa-times"></i> Clear
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Search Section -->
+            <div class="search-section glass-card">
+                <div class="search-container">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="searchTasks" class="search-input" placeholder="🔍 Search your tasks...">
+                    <button class="btn btn-info" onclick="todoApp.showAnalytics()">
+                        <i class="fas fa-chart-bar"></i> Analytics
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions-section glass-card">
+                <h3>⚡ Quick Actions</h3>
+                <div class="quick-actions">
+                    <button class="btn btn-warning" onclick="todoApp.exportTasks()">
+                        <i class="fas fa-download"></i> Export Tasks
+                    </button>
+                    <label class="btn btn-success" for="importFile">
+                        <i class="fas fa-upload"></i> Import Tasks
+                        <input type="file" id="importFile" accept=".json" style="display: none;" onchange="todoApp.importTasks(event)">
+                    </label>
+                    <button class="btn btn-danger" onclick="todoApp.clearAllTasks()">
+                        <i class="fas fa-trash-alt"></i> Clear All
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter and Sort Section -->
+            <div class="filter-section glass-card">
+                <h3>🔍 Filter & Sort</h3>
+                <div class="filter-controls">
+                    <div class="filter-group">
+                        <label for="filterStatus">📊 Filter by Status</label>
+                        <select id="filterStatus">
+                            <option value="all">🌟 All Tasks</option>
+                            <option value="pending">⏳ Pending Tasks</option>
+                            <option value="completed">✅ Completed Tasks</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filterPriority">🎯 Filter by Priority</label>
+                        <select id="filterPriority">
+                            <option value="all">All Priorities</option>
+                            <option value="high">🔴 High Priority</option>
+                            <option value="medium">🟡 Medium Priority</option>
+                            <option value="low">🟢 Low Priority</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filterCategory">📂 Filter by Category</label>
+                        <select id="filterCategory">
+                            <option value="all">All Categories</option>
+                            <option value="personal">👤 Personal</option>
+                            <option value="work">💼 Work</option>
+                            <option value="shopping">🛒 Shopping</option>
+                            <option value="health">🏥 Health</option>
+                            <option value="education">📚 Education</option>
+                            <option value="other">📋 Other</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="sortBy">📋 Sort by</label>
+                        <select id="sortBy">
+                            <option value="created">📅 Date Created</option>
+                            <option value="dueDate">⏰ Due Date</option>
+                            <option value="priority">🎯 Priority Level</option>
+                            <option value="title">📝 Title (A-Z)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Task Statistics -->
+            <div class="stats-section">
+                <div class="stat-card glass-card">
+                    <div class="stat-icon">📝</div>
+                    <div class="stat-number" id="totalTasks">0</div>
+                    <div class="stat-label">Total Tasks</div>
+                </div>
+                <div class="stat-card glass-card">
+                    <div class="stat-icon">⏳</div>
+                    <div class="stat-number" id="pendingTasks">0</div>
+                    <div class="stat-label">Pending</div>
+                </div>
+                <div class="stat-card glass-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-number" id="completedTasks">0</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+                <div class="stat-card glass-card">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-number" id="completionRate">0%</div>
+                    <div class="stat-label">Completion Rate</div>
+                </div>
+            </div>
+
+            <!-- Tasks List -->
+            <div class="tasks-section glass-card">
+                <h2>📋 Your Tasks</h2>
+                <div id="tasksContainer" class="tasks-container">
+                    <!-- Tasks will be dynamically inserted here -->
+                </div>
+                <div id="noTasks" class="no-tasks" style="display: none;">
+                    <i class="fas fa-clipboard-list"></i>
+                    <h3>No tasks yet!</h3>
+                    <p>Add your first task above to get started on your productivity journey! 🚀</p>
+                    <div class="productivity-tips">
+                        <h4>💡 Pro Tips:</h4>
+                        <ul>
+                            <li>Use Ctrl+Enter to quickly add tasks</li>
+                            <li>Set due dates to stay organized</li>
+                            <li>Use priority levels for better focus</li>
+                            <li>Search tasks with Ctrl+F</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Task Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Task</h3>
+                <span class="close">&times;</span>
+            </div>
+            <form id="editTaskForm">
+                <div class="form-group">
+                    <label for="editTaskTitle">Title:</label>
+                    <input type="text" id="editTaskTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="editTaskDescription">Description:</label>
+                    <textarea id="editTaskDescription"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editTaskDate">Due Date:</label>
+                        <input type="date" id="editTaskDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="editTaskTime">Due Time:</label>
+                        <input type="time" id="editTaskTime">
+                    </div>
+                    <div class="form-group">
+                        <label for="editTaskPriority">Priority:</label>
+                        <select id="editTaskPriority">
+                            <option value="low">🟢 Low</option>
+                            <option value="medium">🟡 Medium</option>
+                            <option value="high">🔴 High</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editTaskCategory">Category:</label>
+                        <select id="editTaskCategory">
+                            <option value="personal">👤 Personal</option>
+                            <option value="work">💼 Work</option>
+                            <option value="shopping">🛒 Shopping</option>
+                            <option value="health">🏥 Health</option>
+                            <option value="education">📚 Education</option>
+                            <option value="other">📋 Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelEdit">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Analytics Modal -->
+    <div id="analyticsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📊 Task Analytics</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="analytics-content">
+                <div class="analytics-grid">
+                    <div class="analytics-card">
+                        <h4>📈 Task Overview</h4>
+                        <div id="taskOverview"></div>
+                    </div>
+                    <div class="analytics-card">
+                        <h4>🎯 Priority Distribution</h4>
+                        <div id="priorityStats"></div>
+                    </div>
+                    <div class="analytics-card">
+                        <h4>📂 Category Breakdown</h4>
+                        <div id="categoryStats"></div>
+                    </div>
+                    <div class="analytics-card">
+                        <h4>⏰ Due Date Analysis</h4>
+                        <div id="dueDateStats"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="simple-script.js"></script>
+</body>
+</html>

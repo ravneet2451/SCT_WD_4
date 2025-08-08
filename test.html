@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .login-page { background: #f0f0f0; padding: 20px; border-radius: 10px; }
+        .main-app { background: #e0e0e0; padding: 20px; border-radius: 10px; }
+        .hidden { display: none; }
+        .btn { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .form-group { margin: 10px 0; }
+        input, select, textarea { width: 100%; padding: 8px; margin: 5px 0; }
+        .chatbot { position: fixed; bottom: 20px; right: 20px; background: white; border: 1px solid #ccc; border-radius: 10px; width: 300px; }
+        .chatbot-header { background: #007bff; color: white; padding: 10px; cursor: pointer; }
+        .chatbot-body { padding: 10px; max-height: 200px; overflow-y: auto; }
+        .chat-input { display: flex; gap: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Login Page -->
+        <div id="loginPage" class="login-page">
+            <h1>Login to Todo App</h1>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Email:</label>
+                    <input type="email" id="email" value="demo@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Password:</label>
+                    <input type="password" id="password" value="password123">
+                </div>
+                <button type="submit" class="btn">Login</button>
+                <button type="button" class="btn" onclick="loginAsGuest()">Guest Mode</button>
+            </form>
+        </div>
+
+        <!-- Main App -->
+        <div id="mainApp" class="main-app hidden">
+            <h1>Todo App</h1>
+            <button onclick="logout()" class="btn">Logout</button>
+            
+            <h2>Add Task</h2>
+            <form id="taskForm">
+                <div class="form-group">
+                    <input type="text" id="taskTitle" placeholder="Task title" required>
+                </div>
+                <div class="form-group">
+                    <textarea id="taskDescription" placeholder="Description"></textarea>
+                </div>
+                <button type="submit" class="btn">Add Task</button>
+            </form>
+
+            <h2>Tasks</h2>
+            <div id="tasksList"></div>
+        </div>
+
+        <!-- Chatbot -->
+        <div class="chatbot">
+            <div class="chatbot-header" onclick="toggleChat()">AI Assistant</div>
+            <div class="chatbot-body" id="chatBody">
+                <div>Hi! I can help you with the todo app.</div>
+                <div class="chat-input">
+                    <input type="text" id="chatInput" placeholder="Ask something...">
+                    <button onclick="sendMessage()">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let tasks = [];
+        let chatOpen = true;
+
+        // Simple authentication
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (email === 'demo@example.com' && password === 'password123') {
+                currentUser = { email: email, name: 'Demo User' };
+                showMainApp();
+                alert('Login successful!');
+            } else {
+                alert('Invalid credentials');
+            }
+        });
+
+        function loginAsGuest() {
+            currentUser = { email: 'guest@example.com', name: 'Guest User' };
+            showMainApp();
+            alert('Welcome, Guest!');
+        }
+
+        function logout() {
+            currentUser = null;
+            tasks = [];
+            showLoginPage();
+            alert('Logged out!');
+        }
+
+        function showLoginPage() {
+            document.getElementById('loginPage').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+        }
+
+        function showMainApp() {
+            document.getElementById('loginPage').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            renderTasks();
+        }
+
+        // Task management
+        document.getElementById('taskForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const title = document.getElementById('taskTitle').value;
+            const description = document.getElementById('taskDescription').value;
+            
+            if (title) {
+                tasks.push({
+                    id: Date.now(),
+                    title: title,
+                    description: description,
+                    completed: false
+                });
+                document.getElementById('taskTitle').value = '';
+                document.getElementById('taskDescription').value = '';
+                renderTasks();
+                alert('Task added!');
+            }
+        });
+
+        function renderTasks() {
+            const tasksList = document.getElementById('tasksList');
+            tasksList.innerHTML = '';
+            
+            if (tasks.length === 0) {
+                tasksList.innerHTML = '<p>No tasks yet. Add your first task!</p>';
+                return;
+            }
+            
+            tasks.forEach(task => {
+                const taskDiv = document.createElement('div');
+                taskDiv.style.border = '1px solid #ccc';
+                taskDiv.style.padding = '10px';
+                taskDiv.style.margin = '5px 0';
+                taskDiv.innerHTML = `
+                    <h3>${task.title}</h3>
+                    <p>${task.description}</p>
+                    <button onclick="deleteTask(${task.id})">Delete</button>
+                    <button onclick="toggleTask(${task.id})">${task.completed ? 'Mark Incomplete' : 'Mark Complete'}</button>
+                `;
+                tasksList.appendChild(taskDiv);
+            });
+        }
+
+        function deleteTask(id) {
+            tasks = tasks.filter(task => task.id !== id);
+            renderTasks();
+        }
+
+        function toggleTask(id) {
+            const task = tasks.find(task => task.id === id);
+            if (task) {
+                task.completed = !task.completed;
+                renderTasks();
+            }
+        }
+
+        // Chatbot
+        function toggleChat() {
+            const chatBody = document.getElementById('chatBody');
+            chatOpen = !chatOpen;
+            chatBody.style.display = chatOpen ? 'block' : 'none';
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (message) {
+                const chatBody = document.getElementById('chatBody');
+                const msgDiv = document.createElement('div');
+                msgDiv.innerHTML = `<strong>You:</strong> ${message}<br><strong>AI:</strong> I can help you with login, adding tasks, and using the app features!`;
+                chatBody.insertBefore(msgDiv, chatBody.lastElementChild);
+                input.value = '';
+            }
+        }
+
+        // Initialize
+        showLoginPage();
+    </script>
+</body>
+</html>

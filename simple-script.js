@@ -85,6 +85,25 @@ class SimpleTodoApp {
                 }
             });
         }
+
+        // Analytics modal close buttons
+        const analyticsModal = document.getElementById('analyticsModal');
+        if (analyticsModal) {
+            const closeBtn = analyticsModal.querySelector('.close');
+            
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    analyticsModal.style.display = 'none';
+                });
+            }
+
+            // Close modal when clicking outside
+            analyticsModal.addEventListener('click', (e) => {
+                if (e.target === analyticsModal) {
+                    analyticsModal.style.display = 'none';
+                }
+            });
+        }
     }
 
     handleLogin() {
@@ -371,6 +390,131 @@ class SimpleTodoApp {
         setTimeout(() => {
             messageDiv.remove();
         }, 3000);
+    }
+
+    clearAllTasks() {
+        if (confirm('Are you sure you want to delete all tasks? This action cannot be undone.')) {
+            this.tasks = [];
+            this.saveTasks();
+            this.renderTasks();
+            this.showMessage('All tasks cleared!', 'success');
+        }
+    }
+
+    exportTasks() {
+        if (this.tasks.length === 0) {
+            this.showMessage('No tasks to export!', 'error');
+            return;
+        }
+
+        const dataStr = JSON.stringify(this.tasks, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `tasks_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        URL.revokeObjectURL(url);
+        this.showMessage('Tasks exported successfully!', 'success');
+    }
+
+    importTasks(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const importedTasks = JSON.parse(e.target.result);
+                if (!Array.isArray(importedTasks)) {
+                    throw new Error('Invalid file format');
+                }
+
+                // Merge with existing tasks, giving new IDs to imported tasks
+                const newTasks = importedTasks.map(task => ({
+                    ...task,
+                    id: Date.now() + Math.random() // Generate new unique ID
+                }));
+
+                this.tasks = [...this.tasks, ...newTasks];
+                this.saveTasks();
+                this.renderTasks();
+                this.showMessage(`Imported ${newTasks.length} tasks successfully!`, 'success');
+            } catch (error) {
+                this.showMessage('Error importing tasks. Please check the file format.', 'error');
+            }
+        };
+        reader.readAsText(file);
+        
+        // Reset file input
+        event.target.value = '';
+    }
+
+    showAnalytics() {
+        const modal = document.getElementById('analyticsModal');
+        if (!modal) {
+            this.showMessage('Analytics modal not found!', 'error');
+            return;
+        }
+
+        // Calculate analytics data
+        const total = this.tasks.length;
+        const completed = this.tasks.filter(t => t.completed).length;
+        const pending = total - completed;
+
+        // Priority distribution
+        const priorities = this.tasks.reduce((acc, task) => {
+            acc[task.priority] = (acc[task.priority] || 0) + 1;
+            return acc;
+        }, {});
+
+        // Category distribution
+        const categories = this.tasks.reduce((acc, task) => {
+            acc[task.category] = (acc[task.category] || 0) + 1;
+            return acc;
+        }, {});
+
+        // Due date analysis
+        const now = new Date();
+        const today = now.toISOString().split('T')[0];
+        const overdue = this.tasks.filter(t => t.date && t.date < today && !t.completed).length;
+        const dueToday = this.tasks.filter(t => t.date === today && !t.completed).length;
+
+        // Update modal content
+        document.getElementById('taskOverview').innerHTML = `
+            <div class="analytics-item"><span>Total Tasks:</span> <strong>${total}</strong></div>
+            <div class="analytics-item"><span>Completed:</span> <strong>${completed}</strong></div>
+            <div class="analytics-item"><span>Pending:</span> <strong>${pending}</strong></div>
+            <div class="analytics-item"><span>Completion Rate:</span> <strong>${total > 0 ? Math.round((completed / total) * 100) : 0}%</strong></div>
+        `;
+
+        document.getElementById('priorityStats').innerHTML = Object.entries(priorities)
+            .map(([priority, count]) => `
+                <div class="analytics-item">
+                    <span>${priority.charAt(0).toUpperCase() + priority.slice(1)}:</span> 
+                    <strong>${count}</strong>
+                </div>
+            `).join('');
+
+        document.getElementById('categoryStats').innerHTML = Object.entries(categories)
+            .map(([category, count]) => `
+                <div class="analytics-item">
+                    <span>${category.charAt(0).toUpperCase() + category.slice(1)}:</span> 
+                    <strong>${count}</strong>
+                </div>
+            `).join('');
+
+        document.getElementById('dueDateStats').innerHTML = `
+            <div class="analytics-item"><span>Overdue:</span> <strong class="overdue">${overdue}</strong></div>
+            <div class="analytics-item"><span>Due Today:</span> <strong class="due-today">${dueToday}</strong></div>
+            <div class="analytics-item"><span>No Due Date:</span> <strong>${this.tasks.filter(t => !t.date).length}</strong></div>
+        `;
+
+        modal.style.display = 'block';
     }
 }
 
